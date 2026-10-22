@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bureau of Small Noises</title>
+<style>
+:root{--paper:#f4f0e7;--ink:#20221f;--red:#e65e3b;--blue:#5578c8;--violet:#8e73bc;--green:#72862c}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:12px ui-monospace,monospace;padding:clamp(18px,4vw,42px)}
+header{border-bottom:1px solid;padding-bottom:10px;letter-spacing:.13em;text-transform:uppercase;font-size:10px}
+h1{font:900 clamp(38px,8vw,76px)/.85 Arial,sans-serif;letter-spacing:-.07em;margin:35px 0 16px}h1 b{color:var(--red)}
+p{line-height:1.6;max-width:500px;color:#595950}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:28px}
+button{cursor:pointer;font:inherit;color:inherit}
+.pad{min-height:100px;border:1px solid var(--ink);background:transparent;text-align:left;padding:12px;display:flex;flex-direction:column;justify-content:space-between}
+.pad:hover{background:#fffaf0;transform:translate(-2px,-2px);box-shadow:3px 3px var(--ink)}
+.g{font:900 34px Arial,sans-serif}.pad small{font-size:9px;letter-spacing:.1em;text-transform:uppercase}
+.score{display:flex;gap:8px;min-height:68px;overflow:auto;align-items:center;border-block:1px solid;padding:12px 0;margin:10px 0}
+.mark{flex:0 0 38px;height:48px;border:1px solid;display:grid;place-items:center;font:900 24px Arial,sans-serif}
+.controls{display:flex;gap:8px;flex-wrap:wrap}.controls button{border:1px solid var(--ink);padding:10px 12px;background:var(--ink);color:var(--paper);text-transform:uppercase;font-size:10px}
+.controls .light{background:transparent;color:var(--ink)}
+@media(max-width:500px){.grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+<header>Office of Unnecessary Instruments / Specimen 001</header>
+<h1>BUREAU OF<br><b>SMALL</b> NOISES.</h1>
+<p>Tap a specimen. Each tiny noise leaves a mark. The score is not written in advance; it happens one little impact at a time.</p>
+<div class="grid" id="pads"></div>
+<p style="text-transform:uppercase;letter-spacing:.1em;font-size:10px">Score so far · <span id="count">0 marks</span></p>
+<div class="score" id="score">The first mark is yours.</div>
+<div class="controls"><button id="play">▶ Play score</button><button class="light" id="undo">Undo last</button><button class="light" id="clear">Clear page</button></div>
+<p style="font-size:10px">Nothing here is tuned. That is a feature.</p>
+<script>
+const S=[['tik','·',1320,'square','#e65e3b'],['plum','◉',220,'sine','#5578c8'],['shh','〰',480,'triangle','#8e73bc'],['krik','⌁',760,'sawtooth','#72862c'],['boing','∿',330,'triangle','#5578c8'],['tss','✳',1680,'square','#e65e3b'],['dum','●',82,'sine','#72862c'],['whirr','◎',520,'sawtooth','#8e73bc']];
+let seq=[],ctx;
+const pads=document.querySelector('#pads'),score=document.querySelector('#score'),count=document.querySelector('#count');
+S.forEach((s,i)=>{let b=document.createElement('button');b.className='pad';b.innerHTML='<small>0'+(i+1)+' / specimen</small><span class="g" style="color:'+s[4]+'">'+s[1]+'</span><strong>'+s[0]+'</strong>';b.onclick=()=>hit(i,true);pads.append(b)});
+function sound(i){let C=window.AudioContext||window.webkitAudioContext;if(!C)return;ctx=ctx||new C();if(ctx.state==='suspended')ctx.resume();let s=S[i],o=ctx.createOscillator(),g=ctx.createGain(),t=ctx.currentTime;o.type=s[3];o.frequency.setValueAtTime(s[2],t);if(i===4)o.frequency.exponentialRampToValueAtTime(110,t+.25);if(i===3)o.frequency.exponentialRampToValueAtTime(420,t+.07);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(i===6?.22:.11,t+.008);g.gain.exponentialRampToValueAtTime(.0001,t+(i===0?.05:.2));o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+.24)}
+function hit(i,record){sound(i);if(record){seq.push(i);draw()}let b=pads.children[i];b.style.background='#fffaf0';setTimeout(()=>b.style.background='',130)}
+function draw(){score.innerHTML='';if(!seq.length){score.textContent='The first mark is yours.'}seq.forEach((i,n)=>{let m=document.createElement('span');m.className='mark';m.textContent=S[i][1];m.style.color=S[i][4];m.style.transform='rotate('+((n%5)-2)*2+'deg)';m.title=(n+1)+'. '+S[i][0];score.append(m)});count.textContent=seq.length+' '+(seq.length===1?'mark':'marks');score.scrollLeft=score.scrollWidth}
+document.querySelector('#undo').onclick=()=>{seq.pop();draw()};document.querySelector('#clear').onclick=()=>{seq=[];draw()};
+document.querySelector('#play').onclick=async()=>{for(let i of [...seq]){hit(i,false);await new Promise(r=>setTimeout(r,360))}};
+draw();
+</script>
+</html>
